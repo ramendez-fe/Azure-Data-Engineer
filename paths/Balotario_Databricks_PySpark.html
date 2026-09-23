@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Balotario Databricks & PySpark</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f5f6f3; --surface:#ffffff; --surface-2:#fbfbf9;
+    --text:#15181d; --text-2:#565c66; --text-muted:#8b8a84;
+    --border:#e2e1d9; --border-strong:#c9c8bf;
+    --accent:#2a6fd1; --accent-ink:#ffffff; --accent-soft:#e9f1fc; --accent-soft-border:#c9dff6;
+    --lvl-basico:#1baf7a; --lvl-basico-soft:#e3f8ef;
+    --lvl-intermedio:#c98500; --lvl-intermedio-soft:#fcefd8;
+    --lvl-avanzado:#d03b3b; --lvl-avanzado-soft:#fbe6e4;
+    --good:#0ca30c; --good-soft:#e4f6e4;
+    --critical:#d03b3b; --critical-soft:#fbe6e4;
+    --shadow: 0 1px 2px rgba(20,20,15,0.05), 0 6px 20px -8px rgba(20,20,15,0.12);
+    --radius: 12px;
+    padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#161615;
+      --text:#f3f3f1; --text-2:#c3c2b7; --text-muted:#8b8a84;
+      --border:#2c2c2a; --border-strong:#3c3c39;
+      --accent:#5c9bec; --accent-ink:#0d0d0d; --accent-soft:#17263a; --accent-soft-border:#28486e;
+      --lvl-basico:#199e70; --lvl-basico-soft:#0f2a21;
+      --lvl-intermedio:#c98500; --lvl-intermedio-soft:#332309;
+      --lvl-avanzado:#e66767; --lvl-avanzado-soft:#341614;
+      --good:#0ca30c; --good-soft:#122912;
+      --critical:#e66767; --critical-soft:#341614;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#161615;
+    --text:#f3f3f1; --text-2:#c3c2b7; --text-muted:#8b8a84;
+    --border:#2c2c2a; --border-strong:#3c3c39;
+    --accent:#5c9bec; --accent-ink:#0d0d0d; --accent-soft:#17263a; --accent-soft-border:#28486e;
+    --lvl-basico:#199e70; --lvl-basico-soft:#0f2a21;
+    --lvl-intermedio:#c98500; --lvl-intermedio-soft:#332309;
+    --lvl-avanzado:#e66767; --lvl-avanzado-soft:#341614;
+    --good:#0ca30c; --good-soft:#122912;
+    --critical:#e66767; --critical-soft:#341614;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size:15px; line-height:1.55;
+  }
+  h1,h2,h3{ font-weight:700; letter-spacing:-0.01em; text-wrap:balance; }
+  .mono{ font-variant-numeric:tabular-nums; }
+  .wrap{ max-width:720px; margin:0 auto; padding:28px 20px 70px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .pad{ padding:22px; }
+  header.top{ padding:20px 0 4px; }
+  header.top h1{ font-size:22px; margin:0 0 4px; }
+  header.top p{ margin:0; color:var(--text-2); font-size:13.5px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:13px; font-weight:600; color:var(--text-2); margin-bottom:6px; }
+  .field input{
+    width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--border-strong);
+    background:var(--surface); color:var(--text); font:inherit; font-size:15px;
+  }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px;
+    font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+  }
+  .badge-basico{ background:var(--lvl-basico-soft); color:var(--lvl-basico); }
+  .badge-intermedio{ background:var(--lvl-intermedio-soft); color:var(--lvl-intermedio); }
+  .badge-avanzado{ background:var(--lvl-avanzado-soft); color:var(--lvl-avanzado); }
+
+  .level-head{ display:flex; align-items:center; gap:10px; margin:30px 0 14px; }
+  .level-head h2{ font-size:17px; margin:0; }
+  .level-head .count{ margin-left:auto; font-size:12.5px; color:var(--text-muted); }
+
+  .q-card{ padding:18px 18px 16px; margin-bottom:12px; }
+  .q-num{ font-size:11.5px; color:var(--text-muted); font-weight:600; margin-bottom:6px; }
+  .q-text{ font-size:15px; font-weight:600; margin-bottom:13px; }
+  .opt{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:9px;
+    border:1px solid var(--border); cursor:pointer; margin-bottom:7px;
+  }
+  .opt:hover{ background:var(--surface-2); }
+  .opt.selected{ border-color:var(--accent); background:var(--accent-soft); }
+  .opt input{ margin-top:3px; accent-color:var(--accent); }
+  .opt span{ font-size:14px; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:12px 22px; border-radius:9px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--accent-ink); cursor:pointer; font-weight:600; font-size:15px;
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn-ghost{ background:transparent; color:var(--accent); }
+  .submit-row{ display:flex; justify-content:center; margin:26px 0 6px; }
+  .progress-note{ text-align:center; font-size:12.5px; color:var(--text-muted); margin-bottom:6px; }
+
+  #resultSection{ margin-top:30px; }
+  .score-hero{ display:flex; align-items:center; gap:22px; padding:26px 22px; flex-wrap:wrap; }
+  .ring{ position:relative; width:104px; height:104px; flex:0 0 auto; border-radius:50%; }
+  .ring-val{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+  .score-breakdown{ display:flex; gap:20px; flex-wrap:wrap; }
+  .score-item .num{ font-size:19px; font-weight:700; }
+  .score-item .lbl{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+
+  .actions{ display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+  .copied-note{ text-align:center; font-size:12.5px; color:var(--good); margin-top:8px; height:16px; }
+  .unanswered{ text-align:center; font-size:12.5px; color:var(--lvl-intermedio); margin-top:8px; }
+
+  [hidden]{ display:none !important; }
+
+  .score-badge{
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top,0px));
+    right: 14px;
+    z-index: 50;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 8px 12px;
+    text-align: right;
+    min-width: 84px;
+  }
+  .score-badge .sb-num{ font-size:17px; font-weight:800; line-height:1.1; }
+  .score-badge .sb-lbl{ font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em; margin-top:1px; }
+
+  .opt.correct{ border-color:var(--good); background:var(--good-soft); }
+  .opt.incorrect{ border-color:var(--critical); background:var(--critical-soft); }
+  .opt.locked{ cursor:default; pointer-events:none; }
+  .opt.locked:hover{ background:inherit; }
+
+  .feedback{ margin-top:2px; padding:9px 12px; border-radius:9px; font-size:13px; display:none; }
+  .feedback.show{ display:block; }
+  .feedback.ok{ background:var(--good-soft); color:var(--good); }
+  .feedback.bad{ background:var(--critical-soft); color:var(--critical); }
+  .feedback .fb-exp{ color:var(--text-2); font-weight:400; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="score-badge" id="scoreBadge">
+  <div class="sb-num mono"><span id="sbCorrect">0</span>/<span id="sbAnswered">0</span></div>
+  <div class="sb-lbl">Puntaje</div>
+</div>
+<div class="wrap">
+  <header class="top">
+    <h1>Balotario Databricks &amp; PySpark</h1>
+    <p>GDN-e Perú · Chapter Data — 60 preguntas de opción múltiple, nivel básico a avanzado.</p>
+  </header>
+
+  <div class="card pad" style="margin:18px 0 8px;">
+    <div class="field">
+      <label for="fName">Nombre completo</label>
+      <input id="fName" type="text" placeholder="Ej. María Fernández">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="fEmail">Correo electrónico</label>
+      <input id="fEmail" type="email" placeholder="nombre@correo.com">
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+
+  <div class="submit-row">
+    <button class="btn" id="submitBtn">Ver mi resultado →</button>
+  </div>
+  <div class="unanswered" id="unansweredNote" hidden></div>
+
+  <div id="resultSection" hidden></div>
+</div>
+
+<script src="explicaciones.js"></script>
+<script>
+const QUESTIONS = [{"id": "b1", "level": "basico", "text": "¿Qué es un SparkSession en PySpark?", "opts": [{"t": "Una tabla temporal en memoria", "c": false}, {"t": "El punto de entrada unificado para trabajar con Spark (DataFrames, SQL, configuración)", "c": true}, {"t": "Un tipo de cluster de Databricks", "c": false}, {"t": "Un archivo de configuración de red", "c": false}, {"t": "Un formato de almacenamiento de datos", "c": false}]}, {"id": "b2", "level": "basico", "text": "¿Cuál de las siguientes operaciones de PySpark es una acción (no una transformación)?", "opts": [{"t": "select()", "c": false}, {"t": "filter()", "c": false}, {"t": "collect()", "c": true}, {"t": "withColumn()", "c": false}, {"t": "drop()", "c": false}]}, {"id": "b3", "level": "basico", "text": "¿Qué método se usa para leer un archivo CSV como DataFrame en PySpark?", "opts": [{"t": "spark.load.csv()", "c": false}, {"t": "spark.read.csv()", "c": true}, {"t": "spark.open.csv()", "c": false}, {"t": "spark.dataframe.csv()", "c": false}, {"t": "spark.import.csv()", "c": false}]}, {"id": "b4", "level": "basico", "text": "¿Qué método permite ver el esquema (columnas y tipos de datos) de un DataFrame?", "opts": [{"t": "df.describe()", "c": false}, {"t": "df.printSchema()", "c": true}, {"t": "df.info()", "c": false}, {"t": "df.columns()", "c": false}, {"t": "df.explain()", "c": false}]}, {"id": "b5", "level": "basico", "text": "¿Cuál es la diferencia principal entre select() y filter() en PySpark?", "opts": [{"t": "Ambos hacen exactamente lo mismo", "c": false}, {"t": "select() elige/proyecta columnas; filter() (o where()) selecciona filas según una condición", "c": true}, {"t": "select() solo funciona con SQL puro", "c": false}, {"t": "filter() elimina columnas duplicadas", "c": false}, {"t": "select() ordena el DataFrame", "c": false}]}, {"id": "b6", "level": "basico", "text": "¿Qué hace el método show() sobre un DataFrame?", "opts": [{"t": "Es una transformación lazy que no ejecuta nada", "c": false}, {"t": "Es una acción que imprime en consola un número limitado de filas (20 por defecto)", "c": true}, {"t": "Devuelve el DataFrame como archivo CSV", "c": false}, {"t": "Solo funciona dentro de Databricks SQL", "c": false}, {"t": "Cuenta el total de filas sin mostrarlas", "c": false}]}, {"id": "b7", "level": "basico", "text": "En PySpark, ¿qué tipo de objeto representa una columna dentro de una expresión (por ejemplo, col(\"monto\"))?", "opts": [{"t": "Una lista de Python", "c": false}, {"t": "Un objeto Column, usado para construir expresiones sin materializar datos", "c": true}, {"t": "Un RDD independiente", "c": false}, {"t": "Un diccionario", "c": false}, {"t": "Un string plano", "c": false}]}, {"id": "b8", "level": "basico", "text": "¿Para qué se usa el método withColumn() en PySpark?", "opts": [{"t": "Para eliminar una columna", "c": false}, {"t": "Para agregar una nueva columna o reemplazar una existente con una expresión", "c": true}, {"t": "Para renombrar el DataFrame completo", "c": false}, {"t": "Para unir dos DataFrames", "c": false}, {"t": "Para ordenar las columnas alfabéticamente", "c": false}]}, {"id": "b9", "level": "basico", "text": "¿Qué comando mágico se usa en una celda de notebook de Databricks para ejecutar una consulta SQL directamente?", "opts": [{"t": "%python", "c": false}, {"t": "%sql", "c": true}, {"t": "%scala", "c": false}, {"t": "%md", "c": false}, {"t": "%run", "c": false}]}, {"id": "b10", "level": "basico", "text": "¿Qué es DBFS (Databricks File System)?", "opts": [{"t": "Un servicio externo de backup", "c": false}, {"t": "Una capa de abstracción de almacenamiento montada en el workspace de Databricks, sobre almacenamiento en la nube", "c": true}, {"t": "Un sistema de archivos exclusivo del driver, no accesible por los workers", "c": false}, {"t": "Un tipo de base de datos relacional", "c": false}, {"t": "Un formato de archivo como Parquet o Avro", "c": false}]}, {"id": "b11", "level": "basico", "text": "¿Cuál de las siguientes NO es un tipo de cluster o cómputo válido en Databricks?", "opts": [{"t": "All-Purpose cluster", "c": false}, {"t": "Job cluster", "c": false}, {"t": "SQL Warehouse", "c": false}, {"t": "Streaming-Only Cluster", "c": true}, {"t": "Cluster con Photon habilitado", "c": false}]}, {"id": "b12", "level": "basico", "text": "¿Qué método de PySpark se usa para combinar dos DataFrames según una condición de igualdad de columnas?", "opts": [{"t": "merge()", "c": false}, {"t": "join()", "c": true}, {"t": "union()", "c": false}, {"t": "concat()", "c": false}, {"t": "combine()", "c": false}]}, {"id": "b13", "level": "basico", "text": "En df1.join(df2, \"id\", how=\"left\"), ¿qué controla el parámetro how?", "opts": [{"t": "El orden de las columnas resultantes", "c": false}, {"t": "El tipo de join (inner, left, right, outer, etc.)", "c": true}, {"t": "El número de particiones del resultado", "c": false}, {"t": "Si se hace broadcast o no", "c": false}, {"t": "El nombre de la columna resultante", "c": false}]}, {"id": "b14", "level": "basico", "text": "¿Qué método devuelve el número total de filas de un DataFrame?", "opts": [{"t": "df.size()", "c": false}, {"t": "df.count()", "c": true}, {"t": "df.len()", "c": false}, {"t": "df.rows()", "c": false}, {"t": "df.total()", "c": false}]}, {"id": "b15", "level": "basico", "text": "¿Qué es un notebook en Databricks?", "opts": [{"t": "Un archivo de configuración del cluster", "c": false}, {"t": "Un documento interactivo con celdas de código, markdown y resultados, que se ejecuta contra un cluster", "c": true}, {"t": "Un tipo de tabla especial de solo lectura", "c": false}, {"t": "Un servicio de monitoreo de costos", "c": false}, {"t": "Un componente exclusivo de Unity Catalog", "c": false}]}, {"id": "b16", "level": "basico", "text": "Si guardas un DataFrame con df.write.save(\"ruta\") sin especificar formato, ¿qué formato usa por defecto?", "opts": [{"t": "CSV", "c": false}, {"t": "JSON", "c": false}, {"t": "Parquet", "c": true}, {"t": "Avro", "c": false}, {"t": "Texto plano", "c": false}]}, {"id": "b17", "level": "basico", "text": "¿Qué método permite eliminar una o más columnas de un DataFrame?", "opts": [{"t": "df.remove(\"columna\")", "c": false}, {"t": "df.drop(\"columna\")", "c": true}, {"t": "df.delete(\"columna\")", "c": false}, {"t": "df.exclude(\"columna\")", "c": false}, {"t": "df.pop(\"columna\")", "c": false}]}, {"id": "b18", "level": "basico", "text": "¿Qué hace la combinación groupBy(\"col\").agg(sum(\"monto\"))?", "opts": [{"t": "Ordena las filas por la columna \"col\"", "c": false}, {"t": "Agrupa las filas según los valores de \"col\" y calcula la suma de \"monto\" por grupo", "c": true}, {"t": "Elimina duplicados de \"col\"", "c": false}, {"t": "Filtra filas donde \"monto\" sea nulo", "c": false}, {"t": "Crea un índice para \"col\"", "c": false}]}, {"id": "b19", "level": "basico", "text": "¿Para qué se usa el objeto dbutils en Databricks?", "opts": [{"t": "Solo para depurar código Python con breakpoints", "c": false}, {"t": "Para acceder a utilidades de Databricks: archivos (dbutils.fs), secretos (dbutils.secrets), widgets (dbutils.widgets) y notebooks (dbutils.notebook)", "c": true}, {"t": "Para reemplazar completamente a PySpark", "c": false}, {"t": "Es un alias de SparkContext", "c": false}, {"t": "Solo funciona en clusters de tipo Job", "c": false}]}, {"id": "b20", "level": "basico", "text": "¿Qué comando permite instalar una librería Python a nivel de notebook en Databricks?", "opts": [{"t": "!install nombre_libreria", "c": false}, {"t": "%pip install nombre_libreria", "c": true}, {"t": "%sql INSTALL nombre_libreria", "c": false}, {"t": "dbutils.install(\"nombre_libreria\")", "c": false}, {"t": "spark.install(\"nombre_libreria\")", "c": false}]}, {"id": "i1", "level": "intermedio", "text": "¿Qué es una User Defined Function (UDF) en PySpark y por qué debe usarse con cautela?", "opts": [{"t": "Es una función nativa de Spark SQL, siempre más rápida que las funciones built-in", "c": false}, {"t": "Es una función Python personalizada que Spark trata como \"caja negra\": no puede optimizarla con Catalyst y agrega overhead de serialización", "c": true}, {"t": "Solo puede usarse dentro de Delta Lake", "c": false}, {"t": "Reemplaza automáticamente a las funciones de pyspark.sql.functions", "c": false}, {"t": "No puede aplicarse sobre columnas, solo sobre DataFrames completos", "c": false}]}, {"id": "i2", "level": "intermedio", "text": "¿Cuál es la principal ventaja de usar funciones de pyspark.sql.functions en lugar de una UDF?", "opts": [{"t": "Son más fáciles de leer, pero siempre más lentas", "c": false}, {"t": "Catalyst las puede optimizar (pushdown, reordenamiento) y se ejecutan dentro de la JVM sin serialización adicional", "c": true}, {"t": "Solo funcionan con columnas numéricas", "c": false}, {"t": "Requieren registrar la función antes de usarla", "c": false}, {"t": "No pueden combinarse con withColumn()", "c": false}]}, {"id": "i3", "level": "intermedio", "text": "¿Qué logra cache() (o persist()) sobre un DataFrame?", "opts": [{"t": "Escribe el DataFrame de forma permanente en Delta Lake", "c": false}, {"t": "Materializa el DataFrame en memoria (y/o disco) tras la primera acción, evitando recalcular las transformaciones previas", "c": true}, {"t": "Ordena el DataFrame automáticamente", "c": false}, {"t": "Convierte el DataFrame en una tabla SQL permanente", "c": false}, {"t": "Reduce el número de particiones a 1", "c": false}]}, {"id": "i4", "level": "intermedio", "text": "¿Qué diferencia hay entre cache() y persist(StorageLevel.DISK_ONLY)?", "opts": [{"t": "Son idénticos, cache() es solo un alias sin diferencia", "c": false}, {"t": "cache() usa por defecto el nivel MEMORY_AND_DISK; persist() permite elegir explícitamente el StorageLevel", "c": true}, {"t": "cache() solo funciona con RDDs, nunca con DataFrames", "c": false}, {"t": "persist() no libera memoria nunca", "c": false}, {"t": "cache() requiere Unity Catalog habilitado", "c": false}]}, {"id": "i5", "level": "intermedio", "text": "¿Qué es un broadcast join y cuándo conviene usarlo?", "opts": [{"t": "Un join que siempre requiere shuffle completo de ambas tablas", "c": false}, {"t": "Un join en el que una tabla pequeña se envía completa a todos los executors, evitando el shuffle de la tabla grande", "c": true}, {"t": "Un join exclusivo para streaming", "c": false}, {"t": "Un join que solo funciona con tablas Delta", "c": false}, {"t": "Un join que ordena ambas tablas antes de combinarlas", "c": false}]}, {"id": "i6", "level": "intermedio", "text": "¿Qué función de pyspark.sql.functions se usa para forzar explícitamente un broadcast join?", "opts": [{"t": "shuffle()", "c": false}, {"t": "broadcast()", "c": true}, {"t": "small_table()", "c": false}, {"t": "hint(\"broadcast\")", "c": false}, {"t": "cache_join()", "c": false}]}, {"id": "i7", "level": "intermedio", "text": "¿Qué es AQE (Adaptive Query Execution) en Spark?", "opts": [{"t": "Una herramienta externa de monitoreo de clusters", "c": false}, {"t": "Una funcionalidad que ajusta el plan de ejecución en tiempo de ejecución según estadísticas reales de los datos", "c": true}, {"t": "Un tipo de índice para tablas Delta", "c": false}, {"t": "Un reemplazo completo del optimizador Catalyst estático", "c": false}, {"t": "Una API exclusiva de Structured Streaming", "c": false}]}, {"id": "i8", "level": "intermedio", "text": "¿Qué comando SQL de Delta Lake convierte una tabla Parquet existente en una tabla Delta, in-place?", "opts": [{"t": "ALTER TABLE ... SET FORMAT DELTA", "c": false}, {"t": "CONVERT TO DELTA parquet.ruta", "c": true}, {"t": "CREATE DELTA FROM parquet.ruta", "c": false}, {"t": "COPY INTO ... FORMAT DELTA", "c": false}, {"t": "UPGRADE TABLE ... TO DELTA", "c": false}]}, {"id": "i9", "level": "intermedio", "text": "¿Qué carpeta especial mantiene el historial de transacciones (log) de una tabla Delta?", "opts": [{"t": "_checkpoints/", "c": false}, {"t": "_delta_log/", "c": true}, {"t": "_history/", "c": false}, {"t": ".delta_meta/", "c": false}, {"t": "_spark_metadata/", "c": false}]}, {"id": "i10", "level": "intermedio", "text": "¿Qué cláusula SQL permite consultar una versión anterior de una tabla Delta?", "opts": [{"t": "SELECT * FROM tabla ROLLBACK TO 5", "c": false}, {"t": "SELECT * FROM tabla VERSION AS OF 5", "c": true}, {"t": "SELECT * FROM tabla HISTORY 5", "c": false}, {"t": "SELECT * FROM tabla SNAPSHOT 5", "c": false}, {"t": "SELECT * FROM tabla REVERT TO 5", "c": false}]}, {"id": "i11", "level": "intermedio", "text": "¿Qué comando compacta archivos pequeños de una tabla Delta en archivos más grandes?", "opts": [{"t": "COMPACT TABLE", "c": false}, {"t": "OPTIMIZE", "c": true}, {"t": "MERGE FILES", "c": false}, {"t": "REPACK TABLE", "c": false}, {"t": "CONSOLIDATE", "c": false}]}, {"id": "i12", "level": "intermedio", "text": "¿Qué hace el comando VACUUM sobre una tabla Delta?", "opts": [{"t": "Reindexar las columnas de la tabla", "c": false}, {"t": "Eliminar físicamente archivos de datos que ya no están referenciados dentro de la ventana de retención", "c": true}, {"t": "Recalcular estadísticas de la tabla", "c": false}, {"t": "Comprimir el transaction log", "c": false}, {"t": "Convertir la tabla a formato CSV", "c": false}]}, {"id": "i13", "level": "intermedio", "text": "¿En qué formato de archivo almacena Delta Lake los datos por debajo del transaction log?", "opts": [{"t": "ORC", "c": false}, {"t": "Parquet", "c": true}, {"t": "Avro", "c": false}, {"t": "Formato propietario binario de Databricks", "c": false}, {"t": "JSON", "c": false}]}, {"id": "i14", "level": "intermedio", "text": "¿Qué método de escritura de PySpark permite particionar físicamente los datos de salida por el valor de una columna?", "opts": [{"t": "df.write.groupBy(\"fecha\")", "c": false}, {"t": "df.write.partitionBy(\"fecha\").save(\"ruta\")", "c": true}, {"t": "df.write.bucketBy(\"fecha\")", "c": false}, {"t": "df.write.orderBy(\"fecha\")", "c": false}, {"t": "df.write.cluster(\"fecha\")", "c": false}]}, {"id": "i15", "level": "intermedio", "text": "¿Qué es Structured Streaming en Spark?", "opts": [{"t": "Una herramienta externa a Spark para mensajería", "c": false}, {"t": "Un motor de procesamiento de streams construido sobre el motor de Spark SQL, que trata un stream como una tabla que crece indefinidamente", "c": true}, {"t": "Un reemplazo de Delta Lake para datos en tiempo real", "c": false}, {"t": "Una funcionalidad exclusiva de Databricks, no de Apache Spark", "c": false}, {"t": "Un tipo de UDF especial para series de tiempo", "c": false}]}, {"id": "i16", "level": "intermedio", "text": "¿Qué opción es obligatoria en la mayoría de sinks de Structured Streaming para garantizar tolerancia a fallos?", "opts": [{"t": ".option(\"retries\", \"3\")", "c": false}, {"t": ".option(\"checkpointLocation\", \"ruta\")", "c": true}, {"t": ".option(\"mode\", \"safe\")", "c": false}, {"t": ".option(\"failover\", \"true\")", "c": false}, {"t": ".option(\"backup\", \"ruta\")", "c": false}]}, {"id": "i17", "level": "intermedio", "text": "¿Qué es Auto Loader en Databricks?", "opts": [{"t": "Un balanceador de carga para clusters", "c": false}, {"t": "Una funcionalidad para ingesta incremental y eficiente de archivos nuevos, con inferencia y evolución automática de esquema", "c": true}, {"t": "Un servicio de autoescalado de clusters", "c": false}, {"t": "Una herramienta de carga masiva exclusiva para bases de datos relacionales", "c": false}, {"t": "Un tipo de cluster de Databricks optimizado para ML", "c": false}]}, {"id": "i18", "level": "intermedio", "text": "¿Qué valor de formato se usa al leer con Auto Loader en Structured Streaming?", "opts": [{"t": "\"autoload\"", "c": false}, {"t": "\"cloudFiles\"", "c": true}, {"t": "\"incremental\"", "c": false}, {"t": "\"streamfiles\"", "c": false}, {"t": "\"delta_stream\"", "c": false}]}, {"id": "i19", "level": "intermedio", "text": "¿Qué es Unity Catalog en Databricks?", "opts": [{"t": "Un catálogo de plantillas de notebooks", "c": false}, {"t": "Una capa unificada de gobierno de datos a nivel de cuenta que centraliza permisos, linaje y auditoría sobre catálogos, esquemas y tablas", "c": true}, {"t": "Un servicio exclusivo para versionar notebooks", "c": false}, {"t": "Un reemplazo directo de Delta Lake", "c": false}, {"t": "Una herramienta de facturación de Azure", "c": false}]}, {"id": "i20", "level": "intermedio", "text": "¿Qué comando SQL de Unity Catalog otorga permisos de lectura sobre una tabla a un grupo?", "opts": [{"t": "ALLOW SELECT ON tabla TO grupo", "c": false}, {"t": "GRANT SELECT ON TABLE tabla TO grupo", "c": true}, {"t": "SET PERMISSION SELECT tabla grupo", "c": false}, {"t": "ENABLE SELECT tabla FOR grupo", "c": false}, {"t": "ADD ROLE SELECT tabla grupo", "c": false}]}, {"id": "a1", "level": "avanzado", "text": "¿Qué es el \"shuffle\" en Spark y en qué operaciones ocurre típicamente?", "opts": [{"t": "Es la lectura inicial de datos desde el storage, siempre ocurre una sola vez", "c": false}, {"t": "Es el movimiento de datos entre particiones/executors por red y disco; ocurre típicamente en groupBy, join (no-broadcast) y repartition", "c": true}, {"t": "Es un mecanismo exclusivo de Delta Lake para reorganizar archivos", "c": false}, {"t": "Solo ocurre en operaciones de escritura, nunca en lectura ni transformación", "c": false}, {"t": "Es sinónimo de caching", "c": false}]}, {"id": "a2", "level": "avanzado", "text": "¿Cuál es la diferencia clave entre repartition(n) y coalesce(n) respecto al shuffle?", "opts": [{"t": "Ambos siempre hacen shuffle completo", "c": false}, {"t": "repartition() hace shuffle completo (puede aumentar o disminuir particiones); coalesce() evita el shuffle completo, solo para disminuir", "c": true}, {"t": "coalesce() siempre es más lento que repartition()", "c": false}, {"t": "repartition() solo funciona sobre RDDs, no sobre DataFrames", "c": false}, {"t": "coalesce() puede aumentar el número de particiones sin shuffle", "c": false}]}, {"id": "a3", "level": "avanzado", "text": "Se detecta \"data skew\" en un job (una partición con muchos más datos que el resto). ¿Cuál técnica es válida para mitigarlo?", "opts": [{"t": "Aumentar el timeout del job indefinidamente", "c": false}, {"t": "Aplicar \"salting\": agregar una llave aleatoria adicional a la columna sesgada para distribuir mejor los datos", "c": true}, {"t": "Deshabilitar el shuffle por completo", "c": false}, {"t": "Convertir el DataFrame a RDD para evitar el problema", "c": false}, {"t": "Reducir el número de executors a 1", "c": false}]}, {"id": "a4", "level": "avanzado", "text": "¿Qué método de un DataFrame permite inspeccionar el plan físico de ejecución que Spark generará?", "opts": [{"t": "df.plan()", "c": false}, {"t": "df.explain()", "c": true}, {"t": "df.debug()", "c": false}, {"t": "df.trace()", "c": false}, {"t": "df.optimize()", "c": false}]}, {"id": "a5", "level": "avanzado", "text": "¿Qué son los \"join hints\" en Spark SQL (por ejemplo /*+ BROADCAST(t) */)?", "opts": [{"t": "Comentarios ignorados por el motor, solo documentación", "c": false}, {"t": "Directivas que sugieren al optimizador qué estrategia de join usar, sobre las que decide por defecto Catalyst/AQE", "c": true}, {"t": "Una forma de renombrar columnas antes del join", "c": false}, {"t": "Configuraciones exclusivas del cluster, no de la consulta", "c": false}, {"t": "Solo aplican a tablas Delta, nunca a Parquet", "c": false}]}, {"id": "a6", "level": "avanzado", "text": "¿Qué es Z-Ordering en Delta Lake y qué problema resuelve?", "opts": [{"t": "Ordena alfabéticamente los nombres de las tablas en el catálogo", "c": false}, {"t": "Coloca físicamente juntos los valores relacionados de una o más columnas, mejorando el \"data skipping\" en filtros por esas columnas", "c": true}, {"t": "Reemplaza completamente al particionamiento por carpetas", "c": false}, {"t": "Es un tipo de índice B-tree tradicional", "c": false}, {"t": "Solo funciona sobre columnas de tipo string", "c": false}]}, {"id": "a7", "level": "avanzado", "text": "¿Qué es Delta Live Tables (DLT)?", "opts": [{"t": "Un tipo de vista materializada exclusiva de Unity Catalog", "c": false}, {"t": "Un framework declarativo de Databricks para construir y operar pipelines de datos confiables, con manejo automático de dependencias y calidad de datos", "c": true}, {"t": "Un reemplazo de PySpark que usa únicamente SQL", "c": false}, {"t": "Un servicio de BI para dashboards en tiempo real", "c": false}, {"t": "Una API para exportar tablas Delta a Excel", "c": false}]}, {"id": "a8", "level": "avanzado", "text": "En Delta Live Tables, ¿qué decorador se usa para definir una regla de calidad de datos sobre una tabla?", "opts": [{"t": "@check(...)", "c": false}, {"t": "@dlt.expect / @dlt.expect_or_drop / @dlt.expect_or_fail", "c": true}, {"t": "@validate(...)", "c": false}, {"t": "CONSTRAINT ... CHECK", "c": false}, {"t": "@quality_gate(...)", "c": false}]}, {"id": "a9", "level": "avanzado", "text": "¿Cómo se implementa Change Data Capture (CDC) hacia una tabla Delta usando MERGE?", "opts": [{"t": "Con INSERT INTO ... OVERWRITE en cada ejecución", "c": false}, {"t": "Ejecutando un MERGE INTO que, según una llave primaria y un indicador de operación, aplique WHEN MATCHED / WHEN NOT MATCHED de forma idempotente", "c": true}, {"t": "CDC no puede implementarse en Delta Lake", "c": false}, {"t": "Solo es posible mediante un trigger externo a la base de datos origen", "c": false}, {"t": "Reescribiendo toda la tabla destino en cada cambio", "c": false}]}, {"id": "a10", "level": "avanzado", "text": "¿Qué se requiere, además del checkpoint, para lograr semántica \"exactly-once\" de extremo a extremo en Structured Streaming?", "opts": [{"t": "Nada más, el checkpoint por sí solo garantiza exactly-once en cualquier sink", "c": false}, {"t": "Un sink idempotente (por ejemplo, MERGE en una tabla Delta) que no duplique ni pierda datos si se reprocesa un micro-batch", "c": true}, {"t": "Deshabilitar el checkpoint para evitar overhead", "c": false}, {"t": "Usar exclusivamente sinks basados en archivos CSV", "c": false}, {"t": "Ejecutar el stream con un único executor", "c": false}]}, {"id": "a11", "level": "avanzado", "text": "¿Qué es Photon en Databricks?", "opts": [{"t": "Un lenguaje de programación alternativo a PySpark", "c": false}, {"t": "Un motor de ejecución vectorizado, escrito en C++, que acelera consultas SQL y DataFrame manteniendo compatibilidad con las APIs de Spark", "c": true}, {"t": "Una herramienta de visualización de datos", "c": false}, {"t": "Un tipo de almacenamiento exclusivo para streaming", "c": false}, {"t": "Un servicio de autenticación de Databricks", "c": false}]}, {"id": "a12", "level": "avanzado", "text": "¿Qué son las \"cluster policies\" en Databricks?", "opts": [{"t": "Reglas de particionamiento de tablas Delta", "c": false}, {"t": "Configuraciones definidas por administradores que restringen y estandarizan cómo los usuarios crean clusters, por gobierno y control de costos", "c": true}, {"t": "Políticas de retención de VACUUM", "c": false}, {"t": "Reglas de acceso a nivel de fila en Unity Catalog", "c": false}, {"t": "Configuraciones de red (VNet) del workspace", "c": false}]}, {"id": "a13", "level": "avanzado", "text": "En cuanto a costo, ¿qué diferencia principal hay entre un \"job cluster\" y un \"all-purpose cluster\"?", "opts": [{"t": "El job cluster es siempre más caro por hora de cómputo", "c": false}, {"t": "El job cluster se crea automáticamente para ejecutar un job y se termina al finalizar (más económico); el all-purpose permanece activo para uso compartido", "c": true}, {"t": "Ambos tienen exactamente el mismo precio y comportamiento", "c": false}, {"t": "El all-purpose cluster no puede ejecutar jobs programados", "c": false}, {"t": "El job cluster requiere Unity Catalog obligatoriamente", "c": false}]}, {"id": "a14", "level": "avanzado", "text": "¿Qué es \"liquid clustering\" en Delta Lake?", "opts": [{"t": "Un sinónimo de particionamiento tradicional por carpetas", "c": false}, {"t": "Una estrategia más flexible que el particionamiento y Z-Order tradicionales, que permite reclusterizar los datos incrementalmente sin reescribir toda la tabla", "c": true}, {"t": "Una funcionalidad exclusiva de streaming, no aplicable a tablas batch", "c": false}, {"t": "Un reemplazo del transaction log de Delta", "c": false}, {"t": "Una técnica de compresión de archivos Parquet", "c": false}]}, {"id": "a15", "level": "avanzado", "text": "¿Qué mecanismo de Unity Catalog permite ocultar o transformar el valor de una columna sensible según el rol del usuario?", "opts": [{"t": "Row filters", "c": false}, {"t": "Column masking (funciones de enmascaramiento de columna)", "c": true}, {"t": "Cluster policies", "c": false}, {"t": "Delta Time Travel", "c": false}, {"t": "Liquid clustering", "c": false}]}, {"id": "a16", "level": "avanzado", "text": "¿Qué permiten los \"row filters\" de Unity Catalog?", "opts": [{"t": "Ordenar las filas de una tabla por una columna específica", "c": false}, {"t": "Restringir qué filas puede ver cada usuario o grupo dentro de la misma tabla física, aplicando una función de filtro en tiempo de consulta", "c": true}, {"t": "Eliminar físicamente filas duplicadas de forma automática", "c": false}, {"t": "Definir el orden de partición de una tabla", "c": false}, {"t": "Comprimir filas antiguas para ahorrar espacio", "c": false}]}, {"id": "a17", "level": "avanzado", "text": "Para evitar el problema de \"small files\" al escribir la salida de un job recurrente en Delta Lake, ¿qué combinación de acciones es más adecuada?", "opts": [{"t": "Aumentar indefinidamente el número de particiones de escritura", "c": false}, {"t": "Controlar el número de particiones de salida (repartition/coalesce antes de escribir) y ejecutar OPTIMIZE periódicamente", "c": true}, {"t": "Deshabilitar el transaction log de Delta", "c": false}, {"t": "Escribir siempre en modo overwrite completo de la tabla", "c": false}, {"t": "Usar únicamente formato CSV en vez de Parquet/Delta", "c": false}]}, {"id": "a18", "level": "avanzado", "text": "¿Qué es \"predicate pushdown\" y cómo beneficia la lectura de archivos Parquet/Delta?", "opts": [{"t": "Es una técnica para ordenar los resultados finales de una consulta", "c": false}, {"t": "Es la capacidad del motor de empujar los filtros hacia la capa de almacenamiento/lectura, descartando bloques o archivos irrelevantes antes de traerlos a memoria", "c": true}, {"t": "Es exclusivo de bases de datos relacionales, no aplica a Spark", "c": false}, {"t": "Reemplaza la necesidad de particionar o hacer Z-Order", "c": false}, {"t": "Solo funciona con columnas de tipo texto", "c": false}]}, {"id": "a19", "level": "avanzado", "text": "¿Qué es Databricks Workflows (Jobs)?", "opts": [{"t": "Un servicio externo de terceros para monitoreo de infraestructura", "c": false}, {"t": "El orquestador nativo de Databricks para definir y ejecutar pipelines multi-tarea con dependencias, reintentos y programación", "c": true}, {"t": "Una funcionalidad exclusiva para entrenar modelos de Machine Learning", "c": false}, {"t": "Un reemplazo de Unity Catalog para permisos", "c": false}, {"t": "Un tipo de vista SQL materializada", "c": false}]}, {"id": "a20", "level": "avanzado", "text": "Una tabla Delta particionada por fecha tiene mala performance porque además se filtra por otra columna de alta cardinalidad. ¿Qué estrategia de migración es más adecuada?", "opts": [{"t": "Eliminar el particionamiento y no aplicar ninguna estrategia de organización de datos", "c": false}, {"t": "Migrar a liquid clustering con ALTER TABLE ... CLUSTER BY y ejecutar OPTIMIZE, reclusterizando incrementalmente según los patrones de consulta reales", "c": true}, {"t": "Crear una copia manual de la tabla por cada combinación posible de filtros", "c": false}, {"t": "Aumentar el tamaño del cluster de cómputo como única solución", "c": false}, {"t": "Convertir la tabla de Delta a formato CSV para simplificar el acceso", "c": false}]}];
+const LEVELS = ["basico","intermedio","avanzado"];
+const LEVEL_LABEL = { basico:"Básico", intermedio:"Intermedio", avanzado:"Avanzado" };
+
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+function pct(n,d){ return d ? Math.round((n/d)*100) : 0; }
+
+const ORDER = {};
+QUESTIONS.forEach(q => { ORDER[q.id] = shuffle(q.opts.map((_,i)=>i)); });
+const ANSWERS = {};
+
+function renderQuiz(){
+  const area = document.getElementById("quizArea");
+  let html = "";
+  LEVELS.forEach(level => {
+    const qs = QUESTIONS.filter(q => q.level === level);
+    html += `<div class="level-head"><span class="badge badge-${level}">${LEVEL_LABEL[level]}</span><h2>Nivel ${LEVEL_LABEL[level]}</h2><span class="count">${qs.length} preguntas</span></div>`;
+    qs.forEach((q, i) => {
+      const order = ORDER[q.id];
+      const letters = "abcde";
+      html += `<div class="card q-card" id="card-${q.id}">
+        <div class="q-num">${LEVEL_LABEL[level].toUpperCase()} · PREGUNTA ${i+1}</div>
+        <div class="q-text">${esc(q.text)}</div>`;
+      order.forEach((origIdx, pos) => {
+        const opt = q.opts[origIdx];
+        html += `<label class="opt" data-qid="${q.id}" data-idx="${origIdx}">
+          <input type="radio" name="${q.id}" value="${origIdx}">
+          <span>${letters[pos]}) ${esc(opt.t)}</span>
+        </label>`;
+      });
+      html += `<div class="feedback" id="fb-${q.id}"></div></div>`;
+    });
+  });
+  area.innerHTML = html;
+
+  area.querySelectorAll(".opt").forEach(label => {
+    label.addEventListener("click", () => {
+      const qid = label.getAttribute("data-qid");
+      if (ANSWERS[qid] != null) return; // ya respondida, bloqueada
+      const idx = parseInt(label.getAttribute("data-idx"), 10);
+      ANSWERS[qid] = idx;
+
+      const q = QUESTIONS.find(x => x.id === qid);
+      const correctIdx = q.opts.findIndex(o => o.c);
+      const isCorrect = idx === correctIdx;
+
+      document.querySelectorAll(`.opt[data-qid="${qid}"]`).forEach(el => {
+        el.classList.remove("selected");
+        el.classList.add("locked");
+        const elIdx = parseInt(el.getAttribute("data-idx"), 10);
+        if (elIdx === correctIdx) el.classList.add("correct");
+        if (elIdx === idx && !isCorrect) el.classList.add("incorrect");
+      });
+
+      const theory = (typeof EXPLANATIONS !== "undefined" && EXPLANATIONS[qid]) ? EXPLANATIONS[qid] : q.opts[correctIdx].t;
+      const fb = document.getElementById(`fb-${qid}`);
+      fb.classList.add("show", isCorrect ? "ok" : "bad");
+      fb.innerHTML = isCorrect
+        ? `✅ ¡Correcto!<div class="fb-exp">${esc(theory)}</div>`
+        : `❌ Incorrecto. La opción correcta era la <strong>${"abcde"[ORDER[qid].indexOf(correctIdx)]}</strong>: ${esc(q.opts[correctIdx].t)}.<div class="fb-exp"><strong>Explicación teórica:</strong> ${esc(theory)}</div>`;
+
+      updateScoreBadge();
+    });
+  });
+
+  updateScoreBadge();
+}
+
+function updateScoreBadge(){
+  let answered = 0, correct = 0;
+  QUESTIONS.forEach(q => {
+    const chosen = ANSWERS[q.id];
+    if (chosen != null) {
+      answered++;
+      if (q.opts[chosen] && q.opts[chosen].c) correct++;
+    }
+  });
+  document.getElementById("sbCorrect").textContent = correct;
+  document.getElementById("sbAnswered").textContent = answered;
+}
+
+function gradeAll(){
+  const byLevel = { basico:{correct:0,total:0}, intermedio:{correct:0,total:0}, avanzado:{correct:0,total:0} };
+  QUESTIONS.forEach(q => {
+    byLevel[q.level].total++;
+    const chosen = ANSWERS[q.id];
+    const opt = chosen != null ? q.opts[chosen] : null;
+    if (opt && opt.c) byLevel[q.level].correct++;
+  });
+  const total = QUESTIONS.length;
+  const correct = LEVELS.reduce((s,l)=> s + byLevel[l].correct, 0);
+  return { total, correct, scorePct: pct(correct,total), byLevel };
+}
+
+function ringGradient(p){
+  const color = p>=70 ? "var(--good)" : p>=40 ? "var(--lvl-intermedio)" : "var(--critical)";
+  return `conic-gradient(${color} ${p*3.6}deg, var(--border) 0deg)`;
+}
+
+document.getElementById("submitBtn").addEventListener("click", () => {
+  const answeredCount = Object.keys(ANSWERS).length;
+  const note = document.getElementById("unansweredNote");
+  if (answeredCount < QUESTIONS.length) {
+    note.hidden = false;
+    note.textContent = `Te faltan ${QUESTIONS.length - answeredCount} de ${QUESTIONS.length} preguntas por responder. Puedes ver tu resultado igual: las que falten se cuentan como incorrectas.`;
+  } else {
+    note.hidden = true;
+  }
+
+  const name = document.getElementById("fName").value.trim() || "Candidato/a";
+  const email = document.getElementById("fEmail").value.trim();
+  const r = gradeAll();
+
+  const section = document.getElementById("resultSection");
+  section.innerHTML = `
+    <div class="card score-hero">
+      <div class="ring" style="background:${ringGradient(r.scorePct)}">
+        <div class="ring-val mono">${r.scorePct}%</div>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:15.5px;">${esc(name)}</div>
+        <div style="color:var(--text-muted);font-size:12.5px;margin-bottom:10px;">${esc(email)}</div>
+        <div class="score-breakdown">
+          <div class="score-item"><div class="num mono">${r.correct}/${r.total}</div><div class="lbl">Correctas totales</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-basico)">${pct(r.byLevel.basico.correct,r.byLevel.basico.total)}%</div><div class="lbl">Básico</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-intermedio)">${pct(r.byLevel.intermedio.correct,r.byLevel.intermedio.total)}%</div><div class="lbl">Intermedio</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-avanzado)">${pct(r.byLevel.avanzado.correct,r.byLevel.avanzado.total)}%</div><div class="lbl">Avanzado</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="copyBtn">Copiar resumen</button>
+      <button class="btn btn-ghost" id="printBtn">Imprimir / Guardar PDF</button>
+    </div>
+    <div class="copied-note" id="copiedNote"></div>
+  `;
+  section.hidden = false;
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    const summary = `Balotario Databricks & PySpark\nNombre: ${name}\nCorreo: ${email}\nPuntaje: ${r.correct}/${r.total} (${r.scorePct}%)\nBásico: ${pct(r.byLevel.basico.correct,r.byLevel.basico.total)}%  ·  Intermedio: ${pct(r.byLevel.intermedio.correct,r.byLevel.intermedio.total)}%  ·  Avanzado: ${pct(r.byLevel.avanzado.correct,r.byLevel.avanzado.total)}%`;
+    const note = document.getElementById("copiedNote");
+    const done = () => { note.textContent = "Resumen copiado — pégalo en tu correo de respuesta."; setTimeout(()=>note.textContent="", 3000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summary).then(done).catch(() => fallbackCopy(summary, done));
+    } else {
+      fallbackCopy(summary, done);
+    }
+  });
+  document.getElementById("printBtn").addEventListener("click", () => window.print());
+});
+
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+renderQuiz();
+</script>
+</body>
+</html>

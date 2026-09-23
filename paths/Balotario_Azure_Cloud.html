@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Balotario Azure Cloud</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f5f6f3; --surface:#ffffff; --surface-2:#fbfbf9;
+    --text:#15181d; --text-2:#565c66; --text-muted:#8b8a84;
+    --border:#e2e1d9; --border-strong:#c9c8bf;
+    --accent:#2a6fd1; --accent-ink:#ffffff; --accent-soft:#e9f1fc; --accent-soft-border:#c9dff6;
+    --lvl-basico:#1baf7a; --lvl-basico-soft:#e3f8ef;
+    --lvl-intermedio:#c98500; --lvl-intermedio-soft:#fcefd8;
+    --lvl-avanzado:#d03b3b; --lvl-avanzado-soft:#fbe6e4;
+    --good:#0ca30c; --good-soft:#e4f6e4;
+    --critical:#d03b3b; --critical-soft:#fbe6e4;
+    --shadow: 0 1px 2px rgba(20,20,15,0.05), 0 6px 20px -8px rgba(20,20,15,0.12);
+    --radius: 12px;
+    padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#161615;
+      --text:#f3f3f1; --text-2:#c3c2b7; --text-muted:#8b8a84;
+      --border:#2c2c2a; --border-strong:#3c3c39;
+      --accent:#5c9bec; --accent-ink:#0d0d0d; --accent-soft:#17263a; --accent-soft-border:#28486e;
+      --lvl-basico:#199e70; --lvl-basico-soft:#0f2a21;
+      --lvl-intermedio:#c98500; --lvl-intermedio-soft:#332309;
+      --lvl-avanzado:#e66767; --lvl-avanzado-soft:#341614;
+      --good:#0ca30c; --good-soft:#122912;
+      --critical:#e66767; --critical-soft:#341614;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#161615;
+    --text:#f3f3f1; --text-2:#c3c2b7; --text-muted:#8b8a84;
+    --border:#2c2c2a; --border-strong:#3c3c39;
+    --accent:#5c9bec; --accent-ink:#0d0d0d; --accent-soft:#17263a; --accent-soft-border:#28486e;
+    --lvl-basico:#199e70; --lvl-basico-soft:#0f2a21;
+    --lvl-intermedio:#c98500; --lvl-intermedio-soft:#332309;
+    --lvl-avanzado:#e66767; --lvl-avanzado-soft:#341614;
+    --good:#0ca30c; --good-soft:#122912;
+    --critical:#e66767; --critical-soft:#341614;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size:15px; line-height:1.55;
+  }
+  h1,h2,h3{ font-weight:700; letter-spacing:-0.01em; text-wrap:balance; }
+  .mono{ font-variant-numeric:tabular-nums; }
+  .wrap{ max-width:720px; margin:0 auto; padding:28px 20px 70px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .pad{ padding:22px; }
+  header.top{ padding:20px 0 4px; }
+  header.top h1{ font-size:22px; margin:0 0 4px; }
+  header.top p{ margin:0; color:var(--text-2); font-size:13.5px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:13px; font-weight:600; color:var(--text-2); margin-bottom:6px; }
+  .field input{
+    width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--border-strong);
+    background:var(--surface); color:var(--text); font:inherit; font-size:15px;
+  }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px;
+    font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+  }
+  .badge-basico{ background:var(--lvl-basico-soft); color:var(--lvl-basico); }
+  .badge-intermedio{ background:var(--lvl-intermedio-soft); color:var(--lvl-intermedio); }
+  .badge-avanzado{ background:var(--lvl-avanzado-soft); color:var(--lvl-avanzado); }
+
+  .level-head{ display:flex; align-items:center; gap:10px; margin:30px 0 14px; }
+  .level-head h2{ font-size:17px; margin:0; }
+  .level-head .count{ margin-left:auto; font-size:12.5px; color:var(--text-muted); }
+
+  .q-card{ padding:18px 18px 16px; margin-bottom:12px; }
+  .q-num{ font-size:11.5px; color:var(--text-muted); font-weight:600; margin-bottom:6px; }
+  .q-text{ font-size:15px; font-weight:600; margin-bottom:13px; }
+  .opt{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:9px;
+    border:1px solid var(--border); cursor:pointer; margin-bottom:7px;
+  }
+  .opt:hover{ background:var(--surface-2); }
+  .opt.selected{ border-color:var(--accent); background:var(--accent-soft); }
+  .opt input{ margin-top:3px; accent-color:var(--accent); }
+  .opt span{ font-size:14px; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:12px 22px; border-radius:9px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--accent-ink); cursor:pointer; font-weight:600; font-size:15px;
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn-ghost{ background:transparent; color:var(--accent); }
+  .submit-row{ display:flex; justify-content:center; margin:26px 0 6px; }
+  .progress-note{ text-align:center; font-size:12.5px; color:var(--text-muted); margin-bottom:6px; }
+
+  #resultSection{ margin-top:30px; }
+  .score-hero{ display:flex; align-items:center; gap:22px; padding:26px 22px; flex-wrap:wrap; }
+  .ring{ position:relative; width:104px; height:104px; flex:0 0 auto; border-radius:50%; }
+  .ring-val{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+  .score-breakdown{ display:flex; gap:20px; flex-wrap:wrap; }
+  .score-item .num{ font-size:19px; font-weight:700; }
+  .score-item .lbl{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+
+  .actions{ display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+  .copied-note{ text-align:center; font-size:12.5px; color:var(--good); margin-top:8px; height:16px; }
+  .unanswered{ text-align:center; font-size:12.5px; color:var(--lvl-intermedio); margin-top:8px; }
+
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Balotario Azure Cloud</h1>
+    <p>GDN-e Perú · Chapter Data — 60 preguntas de opción múltiple, nivel básico a avanzado.</p>
+  </header>
+
+  <div class="card pad" style="margin:18px 0 8px;">
+    <div class="field">
+      <label for="fName">Nombre completo</label>
+      <input id="fName" type="text" placeholder="Ej. María Fernández">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="fEmail">Correo electrónico</label>
+      <input id="fEmail" type="email" placeholder="nombre@correo.com">
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+
+  <div class="submit-row">
+    <button class="btn" id="submitBtn">Ver mi resultado →</button>
+  </div>
+  <div class="unanswered" id="unansweredNote" hidden></div>
+
+  <div id="resultSection" hidden></div>
+</div>
+
+<script>
+const QUESTIONS = [{"id": "b1", "level": "basico", "text": "¿Qué es un Resource Group en Azure?", "opts": [{"t": "Un tipo de máquina virtual optimizada para bases de datos", "c": false}, {"t": "Un contenedor lógico que agrupa recursos relacionados de Azure para administrarlos, monitorearlos y facturarlos juntos", "c": true}, {"t": "Un grupo de usuarios con acceso de administrador global", "c": false}, {"t": "Una región geográfica donde se despliegan los recursos", "c": false}, {"t": "Un servicio exclusivo para almacenamiento de archivos", "c": false}]}, {"id": "b2", "level": "basico", "text": "¿Qué modelo de servicio en la nube representa Azure SQL Database (PaaS)?", "opts": [{"t": "Infrastructure as a Service (IaaS), donde administras el sistema operativo", "c": false}, {"t": "Platform as a Service (PaaS), donde Azure administra el motor de base de datos, parches y backups", "c": true}, {"t": "Software as a Service (SaaS)", "c": false}, {"t": "On-premises híbrido", "c": false}, {"t": "Function as a Service (FaaS)", "c": false}]}, {"id": "b3", "level": "basico", "text": "¿Cuál es la principal diferencia entre IaaS, PaaS y SaaS?", "opts": [{"t": "No hay ninguna diferencia real, son sinónimos", "c": false}, {"t": "El nivel de responsabilidad que el cliente administra: IaaS deja más control (y trabajo) al cliente; PaaS abstrae la infraestructura; SaaS entrega la aplicación completa lista para usar", "c": true}, {"t": "IaaS es siempre más barato que PaaS y SaaS", "c": false}, {"t": "SaaS solo aplica a bases de datos", "c": false}, {"t": "PaaS requiere administrar servidores físicos", "c": false}]}, {"id": "b4", "level": "basico", "text": "¿Qué es Azure Data Lake Storage Gen2 (ADLS Gen2)?", "opts": [{"t": "Un servicio de cómputo para ejecutar notebooks", "c": false}, {"t": "Almacenamiento de objetos (basado en Blob Storage) con namespace jerárquico, optimizado para analítica de big data", "c": true}, {"t": "Una base de datos relacional administrada", "c": false}, {"t": "Un servicio de mensajería en tiempo real", "c": false}, {"t": "Una herramienta de visualización de datos", "c": false}]}, {"id": "b5", "level": "basico", "text": "¿Qué tipo de almacenamiento de Blob Storage es más económico y se usa para datos accedidos con poca frecuencia?", "opts": [{"t": "Hot tier", "c": false}, {"t": "Cool o Archive tier", "c": true}, {"t": "Premium tier", "c": false}, {"t": "Standard SSD", "c": false}, {"t": "Managed disk", "c": false}]}, {"id": "b6", "level": "basico", "text": "¿Qué es Azure Active Directory (Microsoft Entra ID)?", "opts": [{"t": "Un servicio de almacenamiento de archivos compartidos", "c": false}, {"t": "El servicio de identidad y control de acceso de Azure, usado para autenticación y autorización de usuarios y aplicaciones", "c": true}, {"t": "Un motor de bases de datos NoSQL", "c": false}, {"t": "Una herramienta de monitoreo de rendimiento", "c": false}, {"t": "Un servicio de backup automático", "c": false}]}, {"id": "b7", "level": "basico", "text": "¿Qué es RBAC (Role-Based Access Control) en Azure?", "opts": [{"t": "Un tipo de máquina virtual con GPU", "c": false}, {"t": "Un sistema que otorga permisos a usuarios, grupos o aplicaciones mediante roles asignados sobre un ámbito (recurso, grupo de recursos o suscripción)", "c": true}, {"t": "Un protocolo de red para conectar VNets", "c": false}, {"t": "Una función exclusiva de Azure Databricks", "c": false}, {"t": "Un servicio de facturación", "c": false}]}, {"id": "b8", "level": "basico", "text": "¿Qué es Azure Data Factory (ADF)?", "opts": [{"t": "Un servicio de orquestación e integración de datos (ETL/ELT) que mueve y transforma datos entre distintos orígenes y destinos", "c": true}, {"t": "Una base de datos en memoria", "c": false}, {"t": "Un servicio de autenticación de usuarios", "c": false}, {"t": "Un editor de código para notebooks", "c": false}, {"t": "Un firewall de red", "c": false}]}, {"id": "b9", "level": "basico", "text": "En Azure Data Factory, ¿qué es un Pipeline?", "opts": [{"t": "Un tipo de máquina virtual", "c": false}, {"t": "Una agrupación lógica de actividades que juntas ejecutan una tarea, como copiar o transformar datos", "c": true}, {"t": "Un contenedor de almacenamiento", "c": false}, {"t": "Un rol de seguridad", "c": false}, {"t": "Un panel de Power BI", "c": false}]}, {"id": "b10", "level": "basico", "text": "¿Qué es Azure Key Vault?", "opts": [{"t": "Un servicio para almacenar de forma segura secretos, claves de cifrado y certificados", "c": true}, {"t": "Un servicio de cómputo serverless", "c": false}, {"t": "Un motor de búsqueda de recursos", "c": false}, {"t": "Una herramienta de versionado de código", "c": false}, {"t": "Un tipo de red virtual", "c": false}]}, {"id": "b11", "level": "basico", "text": "¿Qué es Azure Cosmos DB?", "opts": [{"t": "Un servicio de bases de datos NoSQL multi-modelo, distribuido globalmente y con baja latencia garantizada", "c": true}, {"t": "Un servicio exclusivo para almacenar imágenes", "c": false}, {"t": "Una herramienta de orquestación de contenedores", "c": false}, {"t": "Un motor de búsqueda de texto completo", "c": false}, {"t": "Una extensión de Excel en la nube", "c": false}]}, {"id": "b12", "level": "basico", "text": "¿Qué es una Azure Function?", "opts": [{"t": "Una fórmula matemática usada en Azure SQL", "c": false}, {"t": "Un servicio de cómputo serverless que ejecuta pequeñas piezas de código en respuesta a eventos, sin administrar servidores", "c": true}, {"t": "Un tipo de disco administrado", "c": false}, {"t": "Un rol de administrador en Azure AD", "c": false}, {"t": "Un componente exclusivo de Azure Databricks", "c": false}]}, {"id": "b13", "level": "basico", "text": "¿Qué es una Virtual Network (VNet) en Azure?", "opts": [{"t": "Un servicio de backup en la nube", "c": false}, {"t": "La representación de una red privada aislada en Azure, que permite a los recursos comunicarse de forma segura entre sí y con internet", "c": true}, {"t": "Un tipo de máquina virtual optimizada para redes", "c": false}, {"t": "Un servicio de monitoreo de tráfico web", "c": false}, {"t": "Un firewall físico", "c": false}]}, {"id": "b14", "level": "basico", "text": "¿Qué es Azure Monitor?", "opts": [{"t": "Un servicio para recopilar, analizar y actuar sobre datos de telemetría (métricas y logs) del entorno de Azure", "c": true}, {"t": "Un tipo de pantalla física para centros de datos", "c": false}, {"t": "Un servicio de almacenamiento de backups", "c": false}, {"t": "Una herramienta exclusiva para monitorear costos", "c": false}, {"t": "Un servicio de autenticación multifactor", "c": false}]}, {"id": "b15", "level": "basico", "text": "¿Qué es Log Analytics dentro del ecosistema de Azure Monitor?", "opts": [{"t": "Un servicio de facturación detallada", "c": false}, {"t": "El espacio de trabajo donde se almacenan y consultan (con KQL) los logs recopilados por Azure Monitor", "c": true}, {"t": "Un tipo de disco de almacenamiento", "c": false}, {"t": "Una herramienta de diseño de dashboards de Power BI", "c": false}, {"t": "Un servicio de correo electrónico", "c": false}]}, {"id": "b16", "level": "basico", "text": "¿Qué herramienta de Azure ayuda a estimar y controlar los costos de los recursos en la nube?", "opts": [{"t": "Azure Cost Management + Billing", "c": true}, {"t": "Azure Data Factory", "c": false}, {"t": "Azure Key Vault", "c": false}, {"t": "Azure DevOps Boards", "c": false}, {"t": "Azure Synapse Analytics", "c": false}]}, {"id": "b17", "level": "basico", "text": "¿Qué es una Availability Zone en Azure?", "opts": [{"t": "Un tipo de suscripción gratuita", "c": false}, {"t": "Una ubicación física físicamente separada dentro de una región de Azure, con energía y refrigeración independientes, para tolerancia a fallos", "c": true}, {"t": "Un grupo de recursos con permisos restringidos", "c": false}, {"t": "Un servicio de red exclusivo para IoT", "c": false}, {"t": "Una zona horaria configurada por el usuario", "c": false}]}, {"id": "b18", "level": "basico", "text": "¿Qué significa 'escalado vertical' (scale up) de un recurso en Azure?", "opts": [{"t": "Agregar más instancias del mismo recurso", "c": false}, {"t": "Aumentar la capacidad (CPU, memoria) de una instancia existente del recurso", "c": true}, {"t": "Mover el recurso a otra región", "c": false}, {"t": "Eliminar recursos no utilizados", "c": false}, {"t": "Cambiar el proveedor de nube", "c": false}]}, {"id": "b19", "level": "basico", "text": "¿Qué es Azure DevOps?", "opts": [{"t": "Un conjunto de servicios para planificación, control de versiones, integración y entrega continua (CI/CD) de software", "c": true}, {"t": "Un servicio exclusivo de almacenamiento de logs", "c": false}, {"t": "Una base de datos relacional administrada", "c": false}, {"t": "Un tipo de máquina virtual especializada", "c": false}, {"t": "Un servicio de traducción automática", "c": false}]}, {"id": "b20", "level": "basico", "text": "¿Qué es Azure Event Hubs?", "opts": [{"t": "Un servicio de streaming de eventos de alto rendimiento, usado para ingerir grandes volúmenes de datos en tiempo real (como Kafka administrado)", "c": true}, {"t": "Un calendario compartido de eventos corporativos", "c": false}, {"t": "Un servicio de almacenamiento de archivos estáticos", "c": false}, {"t": "Una herramienta de diseño de arquitecturas", "c": false}, {"t": "Un motor de búsqueda de recursos en el portal", "c": false}]}, {"id": "i1", "level": "intermedio", "text": "¿Cuál es la diferencia principal entre Azure Data Factory y Azure Synapse Pipelines?", "opts": [{"t": "No hay ninguna diferencia, son el mismo producto con distinto nombre", "c": false}, {"t": "Synapse Pipelines ofrece la misma capacidad de orquestación de ADF, pero integrada dentro del workspace unificado de Synapse Analytics junto con SQL pools, Spark pools y exploración de datos", "c": true}, {"t": "ADF no puede conectarse a fuentes on-premises", "c": false}, {"t": "Synapse Pipelines solo funciona con datos no estructurados", "c": false}, {"t": "ADF es exclusivo para bases de datos NoSQL", "c": false}]}, {"id": "i2", "level": "intermedio", "text": "¿Qué es un Dedicated SQL Pool en Azure Synapse Analytics?", "opts": [{"t": "Un motor de procesamiento en memoria para machine learning", "c": false}, {"t": "Un almacén de datos relacional masivamente paralelo (MPP) diseñado para analítica de grandes volúmenes de datos", "c": true}, {"t": "Una instancia de Azure SQL Database estándar", "c": false}, {"t": "Un servicio de backup automático de bases de datos", "c": false}, {"t": "Un tipo de índice para tablas pequeñas", "c": false}]}, {"id": "i3", "level": "intermedio", "text": "¿Qué diferencia hay entre un Serverless SQL Pool y un Dedicated SQL Pool en Synapse?", "opts": [{"t": "Son exactamente iguales en costo y rendimiento", "c": false}, {"t": "El Serverless SQL Pool cobra por consulta ejecutada (pago por uso, sin infraestructura reservada) mientras el Dedicated requiere aprovisionar y pagar capacidad de cómputo reservada", "c": true}, {"t": "El Serverless SQL Pool no puede consultar datos en ADLS", "c": false}, {"t": "El Dedicated SQL Pool no soporta SQL estándar", "c": false}, {"t": "Solo el Serverless SQL Pool soporta particionamiento", "c": false}]}, {"id": "i4", "level": "intermedio", "text": "¿Qué es una Managed Identity en Azure y por qué es preferible a usar credenciales embebidas en el código?", "opts": [{"t": "Es un usuario humano con acceso administrativo total", "c": false}, {"t": "Es una identidad administrada automáticamente por Azure AD para un recurso (como una Function o una VM), que permite autenticarse ante otros servicios sin almacenar secretos en el código", "c": true}, {"t": "Es un tipo de rol RBAC exclusivo para bases de datos", "c": false}, {"t": "Es una identidad que solo funciona dentro de Azure DevOps", "c": false}, {"t": "Es sinónimo de una cuenta de servicio en Kubernetes", "c": false}]}, {"id": "i5", "level": "intermedio", "text": "¿Qué es un Private Endpoint en Azure?", "opts": [{"t": "Un puerto abierto públicamente en internet por defecto", "c": false}, {"t": "Una interfaz de red que conecta de forma privada un recurso PaaS (como Storage o SQL Database) a una VNet, evitando exponer el tráfico a internet público", "c": true}, {"t": "Un tipo de máquina virtual sin acceso a red", "c": false}, {"t": "Un endpoint exclusivo para APIs REST públicas", "c": false}, {"t": "Un certificado SSL autofirmado", "c": false}]}, {"id": "i6", "level": "intermedio", "text": "¿Qué patrón de arquitectura de datos organiza el almacenamiento en capas Bronze, Silver y Gold?", "opts": [{"t": "Es exclusivo de bases de datos relacionales tradicionales", "c": false}, {"t": "El patrón Medallion, donde Bronze son datos crudos, Silver datos limpios/validados y Gold datos agregados listos para consumo de negocio", "c": true}, {"t": "Es un esquema de particionamiento físico de discos", "c": false}, {"t": "Es una convención de nombres para Resource Groups", "c": false}, {"t": "Aplica solo a Azure Key Vault", "c": false}]}, {"id": "i7", "level": "intermedio", "text": "¿Qué es Azure Service Bus y en qué se diferencia principalmente de Event Hubs?", "opts": [{"t": "Son idénticos, ambos sirven solo para streaming de big data", "c": false}, {"t": "Service Bus es un servicio de mensajería empresarial (colas y tópicos) orientado a mensajes individuales con garantías de entrega, mientras Event Hubs está optimizado para ingesta masiva de streams de eventos", "c": true}, {"t": "Event Hubs no soporta múltiples consumidores", "c": false}, {"t": "Service Bus solo funciona con protocolos HTTP", "c": false}, {"t": "Event Hubs reemplaza completamente a Azure SQL Database", "c": false}]}, {"id": "i8", "level": "intermedio", "text": "¿Qué es una Integration Runtime (IR) en Azure Data Factory?", "opts": [{"t": "Un tipo de trigger programado", "c": false}, {"t": "La infraestructura de cómputo que ADF usa para ejecutar actividades de movimiento y transformación de datos, ya sea en Azure (Auto-Resolve) o de forma self-hosted para conectar a redes on-premises", "c": true}, {"t": "Un formato de archivo de configuración JSON", "c": false}, {"t": "Un rol de seguridad exclusivo de Synapse", "c": false}, {"t": "Un servicio de facturación de pipelines", "c": false}]}, {"id": "i9", "level": "intermedio", "text": "¿Cuál es la ventaja principal de usar un Self-hosted Integration Runtime en Azure Data Factory?", "opts": [{"t": "Es más barato que el Auto-Resolve Integration Runtime en todos los casos", "c": false}, {"t": "Permite que ADF acceda a fuentes de datos que están dentro de una red privada on-premises o en una VNet sin exposición pública, mediante un agente instalado localmente", "c": true}, {"t": "Elimina la necesidad de usar Linked Services", "c": false}, {"t": "Solo puede usarse con Azure SQL Database", "c": false}, {"t": "Es obligatorio para cualquier pipeline de ADF", "c": false}]}, {"id": "i10", "level": "intermedio", "text": "¿Qué es el particionamiento (partitioning) de una tabla en Azure SQL Database o Synapse, y por qué mejora el rendimiento?", "opts": [{"t": "Es dividir físicamente la base de datos en varios servidores distintos", "c": false}, {"t": "Es dividir una tabla grande en segmentos lógicos según una columna (como fecha), permitiendo que las consultas escaneen solo las particiones relevantes en vez de toda la tabla", "c": true}, {"t": "Es un sinónimo de crear un índice clustered", "c": false}, {"t": "Solo aplica a tablas con menos de 1000 filas", "c": false}, {"t": "Requiere eliminar todas las claves foráneas", "c": false}]}, {"id": "i11", "level": "intermedio", "text": "¿Qué es un Network Security Group (NSG) en Azure?", "opts": [{"t": "Un conjunto de reglas de firewall que controlan el tráfico de red entrante y saliente hacia recursos dentro de una VNet", "c": true}, {"t": "Un grupo de usuarios con acceso a Azure AD", "c": false}, {"t": "Un servicio de VPN administrado", "c": false}, {"t": "Un tipo de balanceador de carga", "c": false}, {"t": "Un certificado de seguridad para APIs", "c": false}]}, {"id": "i12", "level": "intermedio", "text": "¿Para qué se usan las Azure Policy en una organización?", "opts": [{"t": "Para definir el precio de los recursos contratados", "c": false}, {"t": "Para aplicar y hacer cumplir reglas de gobernanza sobre los recursos (por ejemplo, exigir etiquetas, restringir regiones o tipos de SKU permitidos)", "c": true}, {"t": "Para crear backups automáticos de máquinas virtuales", "c": false}, {"t": "Para administrar exclusivamente permisos RBAC", "c": false}, {"t": "Para monitorear el rendimiento de consultas SQL", "c": false}]}, {"id": "i13", "level": "intermedio", "text": "¿Qué diferencia hay entre autenticación y autorización en el contexto de Azure AD?", "opts": [{"t": "Son sinónimos exactos", "c": false}, {"t": "Autenticación verifica la identidad del usuario (quién eres); autorización determina qué acciones o recursos puede acceder ese usuario ya autenticado (qué puedes hacer)", "c": true}, {"t": "Autorización siempre ocurre antes que la autenticación", "c": false}, {"t": "La autenticación solo aplica a aplicaciones, no a usuarios", "c": false}, {"t": "La autorización es exclusiva de Azure Key Vault", "c": false}]}, {"id": "i14", "level": "intermedio", "text": "¿Qué es un Service Principal en Azure AD?", "opts": [{"t": "Un usuario humano con licencia de Office 365", "c": false}, {"t": "Una identidad de seguridad usada por aplicaciones, servicios o herramientas de automatización (como pipelines CI/CD) para autenticarse y acceder a recursos de Azure", "c": true}, {"t": "El administrador principal de una suscripción", "c": false}, {"t": "Un tipo de rol exclusivo de Azure SQL", "c": false}, {"t": "Un certificado autofirmado de red", "c": false}]}, {"id": "i15", "level": "intermedio", "text": "En Azure DevOps o GitHub Actions, ¿qué es un pipeline de CI/CD?", "opts": [{"t": "Una tubería física de red entre data centers", "c": false}, {"t": "Un flujo automatizado que construye, prueba y despliega código (Integración Continua / Entrega Continua) cada vez que hay cambios en el repositorio", "c": true}, {"t": "Un tipo exclusivo de pipeline de Azure Data Factory", "c": false}, {"t": "Un servicio de almacenamiento de artefactos únicamente", "c": false}, {"t": "Un rol de seguridad para desarrolladores", "c": false}]}, {"id": "i16", "level": "intermedio", "text": "¿Qué es Infrastructure as Code (IaC), y qué herramientas de Azure lo implementan (por ejemplo ARM templates, Bicep o Terraform)?", "opts": [{"t": "Es escribir manualmente cada recurso desde el portal de Azure", "c": false}, {"t": "Es definir y aprovisionar infraestructura mediante archivos de configuración declarativos versionables, permitiendo despliegues repetibles y consistentes", "c": true}, {"t": "Es un tipo de base de datos NoSQL", "c": false}, {"t": "Es exclusivo para configurar redes virtuales", "c": false}, {"t": "Es sinónimo de contenedores Docker", "c": false}]}, {"id": "i17", "level": "intermedio", "text": "¿Qué ventaja ofrece Azure SQL Managed Instance frente a Azure SQL Database (single database)?", "opts": [{"t": "No tiene ninguna ventaja, son idénticos en funcionalidad", "c": false}, {"t": "Managed Instance ofrece compatibilidad casi total con SQL Server on-premises (SQL Agent, cross-database queries, CLR), facilitando migraciones lift-and-shift", "c": true}, {"t": "Managed Instance no soporta backups automáticos", "c": false}, {"t": "Azure SQL Database no puede escalar nunca", "c": false}, {"t": "Managed Instance es siempre más barato", "c": false}]}, {"id": "i18", "level": "intermedio", "text": "¿Qué es el 'shared responsibility model' (modelo de responsabilidad compartida) en la nube?", "opts": [{"t": "Un acuerdo donde el cliente es responsable de absolutamente todo", "c": false}, {"t": "Un marco que define qué aspectos de seguridad y cumplimiento gestiona el proveedor de la nube (Azure) y cuáles corresponden al cliente, variando según el modelo IaaS, PaaS o SaaS", "c": true}, {"t": "Un modelo exclusivo para facturación compartida entre departamentos", "c": false}, {"t": "Un tipo de suscripción gratuita compartida", "c": false}, {"t": "Solo aplica a servicios de almacenamiento", "c": false}]}, {"id": "i19", "level": "intermedio", "text": "¿Qué es Azure Purview (actualmente Microsoft Purview) en el contexto de gobernanza de datos?", "opts": [{"t": "Un servicio de cómputo serverless", "c": false}, {"t": "Un servicio de gobernanza unificada que permite descubrir, catalogar, clasificar y rastrear el linaje de datos a través de distintas fuentes en la organización", "c": true}, {"t": "Una herramienta exclusiva de visualización tipo Power BI", "c": false}, {"t": "Un motor de bases de datos NoSQL", "c": false}, {"t": "Un reemplazo directo de Azure Data Factory", "c": false}]}, {"id": "i20", "level": "intermedio", "text": "¿Qué es un Data Lineage (linaje de datos) y por qué es relevante en Data Governance?", "opts": [{"t": "Es el costo acumulado de almacenamiento de un data lake", "c": false}, {"t": "Es el rastro que muestra el origen, las transformaciones y el destino de los datos a lo largo de su ciclo de vida, permitiendo trazabilidad y auditoría", "c": true}, {"t": "Es un sinónimo de particionamiento de tablas", "c": false}, {"t": "Es exclusivo de bases de datos relacionales", "c": false}, {"t": "Es un tipo de índice de búsqueda en Cosmos DB", "c": false}]}, {"id": "a1", "level": "avanzado", "text": "¿Qué estrategia de particionamiento en Azure Synapse Dedicated SQL Pool distribuye las filas de una tabla entre los nodos de cómputo usando una función hash sobre una columna?", "opts": [{"t": "Round-robin distribution", "c": false}, {"t": "Hash distribution, recomendada para tablas de hechos grandes donde se busca minimizar el movimiento de datos (data shuffling) durante joins", "c": true}, {"t": "Replicated distribution", "c": false}, {"t": "Heap distribution", "c": false}, {"t": "Columnstore distribution", "c": false}]}, {"id": "a2", "level": "avanzado", "text": "¿Cuándo conviene usar una tabla 'replicated' en lugar de 'hash distributed' en un Dedicated SQL Pool de Synapse?", "opts": [{"t": "Siempre, sin excepciones, para cualquier tamaño de tabla", "c": false}, {"t": "Para tablas de dimensión relativamente pequeñas que se usan frecuentemente en joins, ya que se copian completas a cada nodo de cómputo evitando movimiento de datos", "c": true}, {"t": "Solo para tablas de hechos con miles de millones de filas", "c": false}, {"t": "Nunca, esa opción fue descontinuada", "c": false}, {"t": "Únicamente para tablas temporales", "c": false}]}, {"id": "a3", "level": "avanzado", "text": "¿Qué es un Clustered Columnstore Index y por qué es el índice por defecto recomendado en Synapse Dedicated SQL Pools para cargas analíticas?", "opts": [{"t": "Es un índice tradicional basado en árbol B para búsquedas puntuales rápidas", "c": false}, {"t": "Almacena y comprime los datos por columnas en lugar de por filas, mejorando drásticamente el rendimiento y la compresión en consultas analíticas que agregan grandes volúmenes de datos", "c": true}, {"t": "Es exclusivo de bases de datos NoSQL como Cosmos DB", "c": false}, {"t": "Requiere que la tabla no tenga más de 100 filas", "c": false}, {"t": "Es lo mismo que un índice heap", "c": false}]}, {"id": "a4", "level": "avanzado", "text": "¿Qué patrón de diseño usa Azure Data Factory para implementar cargas incrementales eficientes en lugar de recargar toda la fuente cada vez?", "opts": [{"t": "No existe forma de hacer cargas incrementales en ADF", "c": false}, {"t": "Usar una columna de marca de tiempo o watermark (por ejemplo, LastModifiedDate) almacenada en una tabla de control, para filtrar y procesar solo los registros nuevos o modificados desde la última ejecución", "c": true}, {"t": "Eliminar y recrear el pipeline completo en cada ejecución", "c": false}, {"t": "Ejecutar el pipeline solo una vez al año", "c": false}, {"t": "Es exclusivo de Azure Databricks y no aplica a ADF", "c": false}]}, {"id": "a5", "level": "avanzado", "text": "En un diseño de Data Warehouse, ¿qué es una Slowly Changing Dimension (SCD) Tipo 2?", "opts": [{"t": "Una dimensión que nunca cambia a lo largo del tiempo", "c": false}, {"t": "Una técnica que preserva el historial de cambios en los atributos de una dimensión creando nuevas filas con fechas de vigencia (efectivo desde/hasta) en lugar de sobrescribir el valor anterior", "c": true}, {"t": "Una dimensión almacenada exclusivamente en Cosmos DB", "c": false}, {"t": "Un tipo de índice para tablas de hechos", "c": false}, {"t": "Un patrón exclusivo de bases de datos NoSQL", "c": false}]}, {"id": "a6", "level": "avanzado", "text": "¿Qué mecanismo de aislamiento de red permite exponer un servicio PaaS de Azure (como Storage) solo a un conjunto específico de VNets/subredes sin usar un Private Endpoint?", "opts": [{"t": "VNet Service Endpoints, que extienden la identidad de la VNet al tráfico hacia el servicio PaaS a través de la red troncal de Azure", "c": true}, {"t": "Desactivar completamente el firewall del recurso", "c": false}, {"t": "Usar exclusivamente contraseñas más largas", "c": false}, {"t": "No existe ningún mecanismo de este tipo en Azure", "c": false}, {"t": "Es exclusivo de máquinas virtuales, no de servicios PaaS", "c": false}]}, {"id": "a7", "level": "avanzado", "text": "¿Qué es el 'data skew' (sesgo de datos) en un sistema de procesamiento distribuido como Synapse o Spark, y por qué degrada el rendimiento?", "opts": [{"t": "Es un error de sintaxis en las consultas SQL", "c": false}, {"t": "Ocurre cuando los datos se distribuyen de forma desigual entre los nodos de cómputo (por ejemplo, por una mala elección de clave de distribución), haciendo que algunos nodos procesen mucho más trabajo que otros y se conviertan en cuello de botella", "c": true}, {"t": "Es un tipo de cifrado de datos en reposo", "c": false}, {"t": "Solo ocurre en bases de datos relacionales de una sola instancia", "c": false}, {"t": "Es sinónimo de una tabla replicada", "c": false}]}, {"id": "a8", "level": "avanzado", "text": "¿Qué diferencia hay entre RTO (Recovery Time Objective) y RPO (Recovery Point Objective) en una estrategia de continuidad de negocio y disaster recovery?", "opts": [{"t": "Son el mismo concepto con distinto nombre", "c": false}, {"t": "RTO es el tiempo máximo aceptable para restaurar el servicio tras una falla; RPO es la cantidad máxima aceptable de datos (medida en tiempo) que se puede perder", "c": true}, {"t": "RTO mide el costo de la infraestructura; RPO mide el número de usuarios afectados", "c": false}, {"t": "RPO siempre debe ser mayor que RTO", "c": false}, {"t": "Ambos aplican solo a máquinas virtuales, no a bases de datos", "c": false}]}, {"id": "a9", "level": "avanzado", "text": "¿Qué es geo-replication activa (Active Geo-Replication) en Azure SQL Database?", "opts": [{"t": "Un backup manual que se ejecuta una vez al mes", "c": false}, {"t": "Una característica que crea hasta cuatro réplicas legibles de una base de datos en distintas regiones, permitiendo failover ante desastres regionales y reducir latencia de lectura", "c": true}, {"t": "Un tipo de índice distribuido", "c": false}, {"t": "Una función exclusiva de Cosmos DB", "c": false}, {"t": "Un mecanismo de cifrado de columnas", "c": false}]}, {"id": "a10", "level": "avanzado", "text": "¿Qué son los niveles de consistencia (consistency levels) en Azure Cosmos DB y para qué sirven?", "opts": [{"t": "Son distintos niveles de precios según el volumen de datos almacenados", "c": false}, {"t": "Son las cinco opciones (Strong, Bounded Staleness, Session, Consistent Prefix, Eventual) que permiten balancear consistencia de datos, disponibilidad y latencia según las necesidades de la aplicación", "c": true}, {"t": "Son roles de seguridad RBAC exclusivos de Cosmos DB", "c": false}, {"t": "Son tipos de índices secundarios", "c": false}, {"t": "Determinan exclusivamente la región de despliegue", "c": false}]}, {"id": "a11", "level": "avanzado", "text": "¿Qué estrategia de particionamiento de Request Units (RU) en Cosmos DB puede causar un 'hot partition' y degradar el rendimiento?", "opts": [{"t": "Usar demasiadas Availability Zones", "c": false}, {"t": "Elegir una clave de partición (partition key) con baja cardinalidad o distribución desigual de acceso, concentrando la carga de lecturas/escrituras en pocas particiones físicas", "c": true}, {"t": "Habilitar el nivel de consistencia Strong", "c": false}, {"t": "Usar TTL (Time to Live) en los documentos", "c": false}, {"t": "Configurar backups automáticos", "c": false}]}, {"id": "a12", "level": "avanzado", "text": "En Azure DevOps, ¿qué diferencia hay entre un pipeline 'classic' basado en UI y un pipeline definido en YAML?", "opts": [{"t": "No hay diferencia funcional, solo estética", "c": false}, {"t": "El pipeline YAML se versiona como código junto al repositorio (infraestructura como código para CI/CD), permitiendo revisiones, historial de cambios y reutilización mediante templates, a diferencia del editor visual classic", "c": true}, {"t": "Los pipelines classic no pueden ejecutar tareas de build", "c": false}, {"t": "YAML solo funciona con GitHub, no con Azure Repos", "c": false}, {"t": "Classic es obligatorio para despliegues a producción", "c": false}]}, {"id": "a13", "level": "avanzado", "text": "¿Qué es un 'blue-green deployment' y cómo se puede implementar en Azure con App Service o Azure Kubernetes Service?", "opts": [{"t": "Es una convención de colores para etiquetar recursos por ambiente", "c": false}, {"t": "Es una estrategia de despliegue que mantiene dos entornos idénticos (blue=actual, green=nuevo), permitiendo cambiar el tráfico de producción al nuevo entorno de forma casi instantánea y revertir rápidamente si hay problemas, usando por ejemplo deployment slots en App Service", "c": true}, {"t": "Es exclusivo de bases de datos NoSQL", "c": false}, {"t": "Requiere eliminar el entorno anterior antes de desplegar el nuevo", "c": false}, {"t": "Es sinónimo de un rollback manual", "c": false}]}, {"id": "a14", "level": "avanzado", "text": "¿Qué ventaja de seguridad ofrece usar 'Customer-Managed Keys' (CMK) en lugar de las claves administradas por Microsoft para cifrado en reposo?", "opts": [{"t": "No hay ninguna ventaja real, CMK es solo más caro", "c": false}, {"t": "Permite al cliente controlar el ciclo de vida de las claves de cifrado (rotación, revocación) desde su propio Key Vault, cumpliendo requisitos regulatorios más estrictos sobre control de datos", "c": true}, {"t": "CMK elimina la necesidad de cualquier autenticación", "c": false}, {"t": "Solo aplica a máquinas virtuales, no a servicios PaaS", "c": false}, {"t": "CMK reemplaza completamente a RBAC", "c": false}]}, {"id": "a15", "level": "avanzado", "text": "¿Qué es 'columnar storage' y por qué formatos como Parquet, usados frecuentemente sobre ADLS Gen2, mejoran el rendimiento analítico frente a CSV?", "opts": [{"t": "Parquet es simplemente un CSV comprimido con otro nombre", "c": false}, {"t": "Parquet almacena los datos por columnas con metadatos de esquema y compresión eficiente, permitiendo leer solo las columnas necesarias (column pruning) y aplicar predicate pushdown, reduciendo drásticamente el I/O en consultas analíticas", "c": true}, {"t": "CSV siempre es más rápido que Parquet para cualquier carga de trabajo", "c": false}, {"t": "Parquet no soporta tipos de datos anidados", "c": false}, {"t": "Parquet solo puede leerse desde Azure Databricks", "c": false}]}, {"id": "a16", "level": "avanzado", "text": "¿Qué es el 'broadcast join' como estrategia de optimización al unir una tabla de hechos grande con una tabla de dimensión pequeña en un motor de procesamiento distribuido?", "opts": [{"t": "Es un tipo de índice exclusivo de SQL Server on-premises", "c": false}, {"t": "Consiste en enviar una copia completa de la tabla pequeña a todos los nodos de cómputo, evitando el costoso shuffle (movimiento de datos) por red que ocurriría al distribuir ambas tablas grandes", "c": true}, {"t": "Es sinónimo de eliminar la tabla de dimensión antes del join", "c": false}, {"t": "Solo funciona cuando ambas tablas son igual de grandes", "c": false}, {"t": "Requiere desactivar el particionamiento por completo", "c": false}]}, {"id": "a17", "level": "avanzado", "text": "¿Qué son las 'polybase' o 'external tables' en Synapse Dedicated SQL Pool y para qué se usan?", "opts": [{"t": "Son tablas temporales que se eliminan automáticamente al final de la sesión", "c": false}, {"t": "Permiten consultar y cargar datos directamente desde archivos almacenados en ADLS Gen2 (o Blob Storage) usando sintaxis T-SQL, sin necesidad de moverlos primero a una tabla interna", "c": true}, {"t": "Son un tipo de índice columnstore especial", "c": false}, {"t": "Solo funcionan con bases de datos NoSQL", "c": false}, {"t": "Requieren replicar los datos en más de 5 regiones", "c": false}]}, {"id": "a18", "level": "avanzado", "text": "¿Qué estrategia se recomienda para minimizar el 'cold start' (tiempo de arranque en frío) en Azure Functions bajo el plan de consumo (Consumption Plan)?", "opts": [{"t": "Nunca se puede reducir el cold start en el plan de consumo", "c": false}, {"t": "Usar un plan Premium o App Service Plan con instancias pre-calentadas (always ready instances), o mantener la función activa con pings periódicos, según el caso de uso", "c": true}, {"t": "Eliminar todas las dependencias de la función", "c": false}, {"t": "Aumentar el tamaño del Resource Group", "c": false}, {"t": "Es exclusivo de aplicaciones escritas en Python", "c": false}]}, {"id": "a19", "level": "avanzado", "text": "¿Qué es el principio de 'least privilege' (mínimo privilegio) aplicado al diseño de roles RBAC en un entorno de datos empresarial en Azure?", "opts": [{"t": "Otorgar a todos los usuarios el rol de Owner para simplificar la administración", "c": false}, {"t": "Otorgar a cada identidad (usuario, service principal o managed identity) únicamente los permisos estrictamente necesarios para realizar su función, en el ámbito más reducido posible, reduciendo la superficie de riesgo", "c": true}, {"t": "Es un concepto exclusivo de Azure Key Vault", "c": false}, {"t": "Significa que solo un administrador puede tener acceso a la suscripción", "c": false}, {"t": "Aplica solo a redes virtuales, no a datos", "c": false}]}, {"id": "a20", "level": "avanzado", "text": "En una arquitectura de referencia de Data Governance con Microsoft Purview, ¿qué papel cumple el 'catálogo de datos' (data catalog) además de indexar metadatos técnicos?", "opts": [{"t": "Únicamente almacena copias físicas redundantes de todos los datos", "c": false}, {"t": "Además del descubrimiento técnico, habilita clasificación automática de datos sensibles, glosario de negocio, linaje end-to-end y políticas de acceso centralizadas, dando visibilidad y control de gobernanza a toda la organización", "c": true}, {"t": "Reemplaza por completo la necesidad de un Data Warehouse", "c": false}, {"t": "Solo funciona con datos almacenados en Cosmos DB", "c": false}, {"t": "Es un servicio exclusivo para backups", "c": false}]}];
+const LEVELS = ["basico","intermedio","avanzado"];
+const LEVEL_LABEL = { basico:"Básico", intermedio:"Intermedio", avanzado:"Avanzado" };
+
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+function pct(n,d){ return d ? Math.round((n/d)*100) : 0; }
+
+const ORDER = {};
+QUESTIONS.forEach(q => { ORDER[q.id] = shuffle(q.opts.map((_,i)=>i)); });
+const ANSWERS = {};
+
+function renderQuiz(){
+  const area = document.getElementById("quizArea");
+  let html = "";
+  LEVELS.forEach(level => {
+    const qs = QUESTIONS.filter(q => q.level === level);
+    html += `<div class="level-head"><span class="badge badge-${level}">${LEVEL_LABEL[level]}</span><h2>Nivel ${LEVEL_LABEL[level]}</h2><span class="count">${qs.length} preguntas</span></div>`;
+    qs.forEach((q, i) => {
+      const order = ORDER[q.id];
+      const letters = "abcde";
+      html += `<div class="card q-card" id="card-${q.id}">
+        <div class="q-num">${LEVEL_LABEL[level].toUpperCase()} · PREGUNTA ${i+1}</div>
+        <div class="q-text">${esc(q.text)}</div>`;
+      order.forEach((origIdx, pos) => {
+        const opt = q.opts[origIdx];
+        html += `<label class="opt" data-qid="${q.id}" data-idx="${origIdx}">
+          <input type="radio" name="${q.id}" value="${origIdx}">
+          <span>${letters[pos]}) ${esc(opt.t)}</span>
+        </label>`;
+      });
+      html += `</div>`;
+    });
+  });
+  area.innerHTML = html;
+
+  area.querySelectorAll(".opt").forEach(label => {
+    label.addEventListener("click", () => {
+      const qid = label.getAttribute("data-qid");
+      const idx = parseInt(label.getAttribute("data-idx"), 10);
+      ANSWERS[qid] = idx;
+      document.querySelectorAll(`.opt[data-qid="${qid}"]`).forEach(el => el.classList.remove("selected"));
+      label.classList.add("selected");
+    });
+  });
+}
+
+function gradeAll(){
+  const byLevel = { basico:{correct:0,total:0}, intermedio:{correct:0,total:0}, avanzado:{correct:0,total:0} };
+  QUESTIONS.forEach(q => {
+    byLevel[q.level].total++;
+    const chosen = ANSWERS[q.id];
+    const opt = chosen != null ? q.opts[chosen] : null;
+    if (opt && opt.c) byLevel[q.level].correct++;
+  });
+  const total = QUESTIONS.length;
+  const correct = LEVELS.reduce((s,l)=> s + byLevel[l].correct, 0);
+  return { total, correct, scorePct: pct(correct,total), byLevel };
+}
+
+function ringGradient(p){
+  const color = p>=70 ? "var(--good)" : p>=40 ? "var(--lvl-intermedio)" : "var(--critical)";
+  return `conic-gradient(${color} ${p*3.6}deg, var(--border) 0deg)`;
+}
+
+document.getElementById("submitBtn").addEventListener("click", () => {
+  const answeredCount = Object.keys(ANSWERS).length;
+  const note = document.getElementById("unansweredNote");
+  if (answeredCount < QUESTIONS.length) {
+    note.hidden = false;
+    note.textContent = `Te faltan ${QUESTIONS.length - answeredCount} de ${QUESTIONS.length} preguntas por responder. Puedes ver tu resultado igual: las que falten se cuentan como incorrectas.`;
+  } else {
+    note.hidden = true;
+  }
+
+  const name = document.getElementById("fName").value.trim() || "Candidato/a";
+  const email = document.getElementById("fEmail").value.trim();
+  const r = gradeAll();
+
+  const section = document.getElementById("resultSection");
+  section.innerHTML = `
+    <div class="card score-hero">
+      <div class="ring" style="background:${ringGradient(r.scorePct)}">
+        <div class="ring-val mono">${r.scorePct}%</div>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:15.5px;">${esc(name)}</div>
+        <div style="color:var(--text-muted);font-size:12.5px;margin-bottom:10px;">${esc(email)}</div>
+        <div class="score-breakdown">
+          <div class="score-item"><div class="num mono">${r.correct}/${r.total}</div><div class="lbl">Correctas totales</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-basico)">${pct(r.byLevel.basico.correct,r.byLevel.basico.total)}%</div><div class="lbl">Básico</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-intermedio)">${pct(r.byLevel.intermedio.correct,r.byLevel.intermedio.total)}%</div><div class="lbl">Intermedio</div></div>
+          <div class="score-item"><div class="num mono" style="color:var(--lvl-avanzado)">${pct(r.byLevel.avanzado.correct,r.byLevel.avanzado.total)}%</div><div class="lbl">Avanzado</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="copyBtn">Copiar resumen</button>
+      <button class="btn btn-ghost" id="printBtn">Imprimir / Guardar PDF</button>
+    </div>
+    <div class="copied-note" id="copiedNote"></div>
+  `;
+  section.hidden = false;
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    const summary = `Balotario Azure Cloud\nNombre: ${name}\nCorreo: ${email}\nPuntaje: ${r.correct}/${r.total} (${r.scorePct}%)\nBásico: ${pct(r.byLevel.basico.correct,r.byLevel.basico.total)}%  ·  Intermedio: ${pct(r.byLevel.intermedio.correct,r.byLevel.intermedio.total)}%  ·  Avanzado: ${pct(r.byLevel.avanzado.correct,r.byLevel.avanzado.total)}%`;
+    const note = document.getElementById("copiedNote");
+    const done = () => { note.textContent = "Resumen copiado — pégalo en tu correo de respuesta."; setTimeout(()=>note.textContent="", 3000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summary).then(done).catch(() => fallbackCopy(summary, done));
+    } else {
+      fallbackCopy(summary, done);
+    }
+  });
+  document.getElementById("printBtn").addEventListener("click", () => window.print());
+});
+
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
